@@ -1,0 +1,12 @@
+fastapi[all]
+pydantic
+psycopg2
+SQLAlchemy
+email-validator
+passlib
+bcrypt
+python-jose[cryptography]
+python-multipart
+alembic
+pydantic-settings
+opentelemetry-instrumentation-fastapi
