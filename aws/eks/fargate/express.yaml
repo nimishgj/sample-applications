@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: express-api
+  namespace: express-api
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: express-api
+  template:
+    metadata:
+      labels:
+        app: express-api
+    spec:
+      containers:
+      - name: express-api
+        image: public.ecr.aws/w7v4m5h1/example-express-api:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: PORT
+          value: "3000"
+        - name: OTLP_ENDPOINT
+          value: "http://3.109.146.170:4318"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: express-api-service
+  namespace: express-api
+spec:
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+  selector:
+    app: express-api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: express-api-ingress
+  namespace: express-api
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: express-api-service
+            port:
+              number: 80
