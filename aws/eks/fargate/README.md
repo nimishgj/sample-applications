@@ -21,6 +21,7 @@ eksctl utils associate-iam-oidc-provider \
 ```
 
 -----------------
+> Delete IAM Policy with name `AWSLoadBalancerControllerIAMPolicy` before running the below commands
 ```shell
 curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.11.0/docs/install/iam_policy.json
 ```
