@@ -7,7 +7,7 @@ requirements:
   
 ```shell
 eksctl create cluster \
-  --name cluster-name \
+  --name nimisha-testing-eks-cluster \
   --version 1.28 \
   --fargate
 ```
@@ -16,7 +16,7 @@ eksctl create cluster \
 
 ```shell
 eksctl utils associate-iam-oidc-provider \
-  --cluster cluster-name \
+  --cluster nimisha-testing-eks-cluster \
   --approve
 ```
 
@@ -38,7 +38,7 @@ AWS_ACCOUNT_ID=$(aws sts get-caller-identity | jq -r '.Account')
 -----------------
 ```shell
 eksctl create iamserviceaccount \
-  --cluster=cluster-name \
+  --cluster=nimisha-testing-eks-cluster \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
   --attach-policy-arn=arn:aws:iam::$(AWS_ACCOUNT_ID):policy/AWSLoadBalancerControllerIAMPolicy \
@@ -48,7 +48,7 @@ eksctl create iamserviceaccount \
 ----------------
 ```shell
 eksctl get iamserviceaccount \
-  --cluster=cluster-name \
+  --cluster=nimisha-testing-eks-cluster \
   --name=aws-load-balancer-controller \
   --namespace=kube-system
 ```
@@ -68,7 +68,7 @@ helm repo update eks
 ```
 ----------------------
 ```shell
-CLUSTER_NAME=cluster-name
+CLUSTER_NAME=nimisha-testing-eks-cluster
 ```
 ----------------------
 ```shell
@@ -82,7 +82,7 @@ VPC_ID=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" | jq -r '
 -------------------
 ```shell
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
-  --set clusterName=cluster-name \
+  --set clusterName=nimisha-testing-eks-cluster \
   --set serviceAccount.create=false \
   --set region=ap-south-1 \
   --set vpcId=$VPC_ID \
@@ -99,7 +99,7 @@ wait for 10mis
 -------------------
 ```shell
 eksctl create fargateprofile \
-  --cluster cluster-name \
+  --cluster nimisha-testing-eks-cluster \
   --region ap-south-1 \
   --name your-alb-sample-app \
   --namespace game-2048
