@@ -5,6 +5,27 @@ set -e
 
 # Script to create an EKS cluster with AWS Load Balancer Controller
 echo "===== Starting EKS Cluster Creation Script ====="
+# Check if IAM policy AWSLoadBalancerControllerIAMPolicy exists
+echo "===== Checking if IAM Policy 'AWSLoadBalancerControllerIAMPolicy' exists ====="
+IAM_POLICY_NAME="AWSLoadBalancerControllerIAMPolicy"
+POLICY_ARN=$(aws iam list-policies --scope Local | jq -r --arg name "$IAM_POLICY_NAME" '.Policies[] | select(.PolicyName == $name) | .Arn')
+
+if [[ -z "$POLICY_ARN" ]]; then
+  echo "IAM policy '$IAM_POLICY_NAME' not found. Creating it..."
+
+  # Download the IAM policy document
+  curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.11.0/docs/install/iam_policy.json
+
+  # Create the IAM policy
+  aws iam create-policy \
+    --policy-name "$IAM_POLICY_NAME" \
+    --policy-document file://iam_policy.json
+
+  # Get the new policy ARN
+  POLICY_ARN=$(aws iam list-policies --scope Local | jq -r --arg name "$IAM_POLICY_NAME" '.Policies[] | select(.PolicyName == $name) | .Arn')
+else
+  echo "IAM policy '$IAM_POLICY_NAME' already exists: $POLICY_ARN"
+fi
 
 # Define variables
 CLUSTER_NAME="nimisha-testing-eks-cluster-ec2"
