@@ -9,6 +9,7 @@ on:
       - 'java/springboot/**'
       - 'nodejs/express/**'
       - 'python/fastapi/**'
+      - 'php/laravel/**'
       - '.github/workflows/build-and-push.yml'
   pull_request:
     branches: [ main ]
@@ -17,6 +18,7 @@ on:
       - 'java/springboot/**'
       - 'nodejs/express/**'
       - 'python/fastapi/**'
+      - 'php/laravel/**'
       - '.github/workflows/build-and-push.yml'
   workflow_dispatch:
 
@@ -31,6 +33,7 @@ jobs:
       java: ${{ steps.changes.outputs.java }}
       nodejs: ${{ steps.changes.outputs.nodejs }}
       python: ${{ steps.changes.outputs.python }}
+      php: ${{ steps.changes.outputs.php }}
       latest_tag: ${{ steps.latest_tag.outputs.tag }}
     steps:
     - name: Checkout repository
@@ -64,6 +67,8 @@ jobs:
             - 'nodejs/express/**'
           python:
             - 'python/fastapi/**'
+          php:
+            - 'php/laravel/**'
 
   build-go:
     runs-on: ubuntu-latest
@@ -229,9 +234,50 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
+  build-php:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.php == 'true' || github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/nimishgj/hello-laravel
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=raw,value=latest,enable={{is_default_branch}}
+          type=raw,value=${{ needs.changes.outputs.latest_tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+          type=sha,prefix={{branch}}-
+
+    - name: Build and push PHP/Laravel image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./php/laravel
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
   summary:
     runs-on: ubuntu-latest
-    needs: [changes, build-go, build-java, build-nodejs, build-python]
+    needs: [changes, build-go, build-java, build-nodejs, build-python, build-php]
     if: always()
     steps:
     - name: Build Summary
@@ -247,6 +293,7 @@ jobs:
         echo "- Java/SpringBoot: ${{ needs.changes.outputs.java }}" >> $GITHUB_STEP_SUMMARY
         echo "- Node.js/Express: ${{ needs.changes.outputs.nodejs }}" >> $GITHUB_STEP_SUMMARY
         echo "- Python/FastAPI: ${{ needs.changes.outputs.python }}" >> $GITHUB_STEP_SUMMARY
+        echo "- PHP/Laravel: ${{ needs.changes.outputs.php }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "| Application | Image | Changes | Status |" >> $GITHUB_STEP_SUMMARY
         echo "|-------------|-------|---------|---------|" >> $GITHUB_STEP_SUMMARY
@@ -254,6 +301,7 @@ jobs:
         echo "| Java/SpringBoot | \`ghcr.io/nimishgj/hello-springboot:latest\` | ${{ needs.changes.outputs.java }} | ${{ needs.build-java.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Node.js/Express | \`ghcr.io/nimishgj/hello-express:latest\` | ${{ needs.changes.outputs.nodejs }} | ${{ needs.build-nodejs.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Python/FastAPI | \`ghcr.io/nimishgj/hello-fastapi:latest\` | ${{ needs.changes.outputs.python }} | ${{ needs.build-python.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| PHP/Laravel | \`ghcr.io/nimishgj/hello-laravel:latest\` | ${{ needs.changes.outputs.php }} | ${{ needs.build-php.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Usage Examples" >> $GITHUB_STEP_SUMMARY
         echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
@@ -269,5 +317,8 @@ jobs:
         fi
         if [[ "${{ needs.changes.outputs.python }}" == "true" ]]; then
           echo "docker run -p 8080:8080 ghcr.io/nimishgj/hello-fastapi:latest" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [[ "${{ needs.changes.outputs.php }}" == "true" ]]; then
+          echo "docker run -p 8080:80 ghcr.io/nimishgj/hello-laravel:latest" >> $GITHUB_STEP_SUMMARY
         fi
         echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

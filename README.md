@@ -18,6 +18,7 @@ All applications implement the same User Management API with CRUD operations:
 | **Java** | Spring Boot | [`java/springboot/`](./java/springboot/) | Enterprise-grade, layered architecture |  
 | **Node.js** | Express.js | [`nodejs/express/`](./nodejs/express/) | Middleware-based, comprehensive validation |
 | **Python** | FastAPI | [`python/fastapi/`](./python/fastapi/) | Modern async API with auto-documentation |
+| **PHP** | Laravel | [`php/laravel/`](./php/laravel/) | Elegant syntax, built-in ORM, artisan CLI |
 
 ### Cloud Deployment
 
@@ -96,6 +97,15 @@ pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
+### PHP (Laravel)
+```bash
+cd php/laravel
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan serve --host=0.0.0.0 --port=8080
+```
+
 All servers run on **http://localhost:8080**
 
 ## 🐳 Docker Support
@@ -125,6 +135,9 @@ npm test
 
 # Python
 pytest -v
+
+# PHP
+php artisan test
 ```
 
 ## 📊 Performance Comparison
@@ -133,6 +146,7 @@ pytest -v
 |-----------|-------------|--------------|-------------|
 | **Go/Gin** | ~100ms | ~10MB | High |
 | **FastAPI** | ~200ms | ~15MB | High |
+| **Laravel** | ~500ms | ~30MB | Medium |
 | **Express** | ~300ms | ~25MB | Medium |
 | **Spring Boot** | ~3s | ~150MB | High |
 
@@ -166,6 +180,7 @@ Each application follows framework-specific best practices:
 - **Java**: Layered architecture (Controller → Service → Model)
 - **Node.js**: Middleware-based request processing
 - **Python**: FastAPI with Pydantic models and async handlers
+- **PHP**: Laravel MVC with Eloquent ORM and Artisan CLI
 
 ## 🤝 Use Cases
 
@@ -182,6 +197,7 @@ Each implementation has detailed documentation:
 - [`java/springboot/README.md`](./java/springboot/README.md)  
 - [`nodejs/express/README.md`](./nodejs/express/README.md)
 - [`python/fastapi/README.md`](./python/fastapi/README.md)
+- [`php/laravel/README.md`](./php/laravel/README.md)
 
 ## 🚀 Deployment
 
