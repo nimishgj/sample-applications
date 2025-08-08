@@ -8,12 +8,25 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    private static array $users = [
+    private array $users = [
         ['id' => 1, 'name' => 'John Doe', 'email' => 'john@example.com'],
         ['id' => 2, 'name' => 'Jane Smith', 'email' => 'jane@example.com'],
     ];
 
-    private static int $nextId = 3;
+    private int $nextId = 3;
+
+    public function __construct()
+    {
+        if (session()->has('users')) {
+            $this->users = session('users');
+            $this->nextId = session('nextId', 3);
+        }
+    }
+
+    private function saveToSession()
+    {
+        session(['users' => $this->users, 'nextId' => $this->nextId]);
+    }
 
     /**
      * Health check endpoint
@@ -33,8 +46,8 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
-            'users' => self::$users,
-            'total' => count(self::$users)
+            'users' => $this->users,
+            'total' => count($this->users)
         ]);
     }
 
@@ -69,12 +82,13 @@ class UserController extends Controller
         }
 
         $user = [
-            'id' => self::$nextId++,
+            'id' => $this->nextId++,
             'name' => $request->input('name'),
             'email' => $request->input('email'),
         ];
 
-        self::$users[] = $user;
+        $this->users[] = $user;
+        $this->saveToSession();
 
         return response()->json($user, 201);
     }
@@ -102,14 +116,16 @@ class UserController extends Controller
         }
 
         if ($request->has('name')) {
-            self::$users[$userIndex]['name'] = $request->input('name');
+            $this->users[$userIndex]['name'] = $request->input('name');
         }
 
         if ($request->has('email')) {
-            self::$users[$userIndex]['email'] = $request->input('email');
+            $this->users[$userIndex]['email'] = $request->input('email');
         }
 
-        return response()->json(self::$users[$userIndex]);
+        $this->saveToSession();
+
+        return response()->json($this->users[$userIndex]);
     }
 
     /**
@@ -123,7 +139,8 @@ class UserController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        array_splice(self::$users, $userIndex, 1);
+        array_splice($this->users, $userIndex, 1);
+        $this->saveToSession();
 
         return response()->json(['message' => 'User deleted successfully']);
     }
@@ -133,7 +150,7 @@ class UserController extends Controller
      */
     private function findUserById(int $id): ?array
     {
-        foreach (self::$users as $user) {
+        foreach ($this->users as $user) {
             if ($user['id'] === $id) {
                 return $user;
             }
@@ -146,7 +163,7 @@ class UserController extends Controller
      */
     private function findUserIndexById(int $id): int
     {
-        foreach (self::$users as $index => $user) {
+        foreach ($this->users as $index => $user) {
             if ($user['id'] === $id) {
                 return $index;
             }
